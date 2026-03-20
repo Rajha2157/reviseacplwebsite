@@ -1,0 +1,12 @@
+{
+  "name": "acplusa-replica",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Production static replica for ACPL USA website",
+  "scripts": {
+    "serve": "serve frontend -l 5500"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

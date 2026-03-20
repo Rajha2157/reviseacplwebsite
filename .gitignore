@@ -1,0 +1,19 @@
+# Node and frontend artifacts
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+.cache/
+
+# Logs and temp
+*.log
+temp_*.html
+*.tmp
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/*.log
