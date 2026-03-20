@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "Production static replica for ACPL USA website",
   "scripts": {
-    "serve": "serve frontend -l 5500"
+    "serve": "serve frontend -l 5500",
+    "deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File ./publish_to_github.ps1"
   },
   "devDependencies": {
     "serve": "^14.2.4"
