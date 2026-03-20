@@ -1,21 +1,53 @@
+param(
+  [string]$Remote = 'origin',
+  [string]$PagesBranch = 'gh-pages'
+)
+
 $ErrorActionPreference = 'Stop'
 
-$repoName = 'acplusa-client-demo'
-$description = 'Production-ready ACPL USA website replica for client demo'
+function Invoke-Git {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string[]]$Arguments
+  )
 
-$gh = 'C:\Program Files\GitHub CLI\gh.exe'
-if (-not (Test-Path $gh)) {
-  throw 'GitHub CLI not found at C:\Program Files\GitHub CLI\gh.exe'
+  & git @Arguments
+  if ($LASTEXITCODE -ne 0) {
+    throw ('git ' + ($Arguments -join ' ') + ' failed with exit code ' + $LASTEXITCODE)
+  }
 }
 
-Write-Host 'Checking GitHub auth...'
-& $gh auth status
+Write-Host 'Validating repository state...'
+Invoke-Git -Arguments @('rev-parse', '--is-inside-work-tree')
 
-Write-Host 'Creating public repository if missing...'
-& $gh repo create $repoName --public --description $description --source . --remote origin --push
+$remoteUrl = (& git remote get-url $Remote).Trim()
+if ($LASTEXITCODE -ne 0 -or -not $remoteUrl) {
+  throw "Remote '$Remote' is not configured."
+}
 
-Write-Host 'Setting Pages source to GitHub Actions...'
-& $gh api -X POST repos/:owner/$repoName/pages -f build_type=workflow
+$status = (& git status --short).Trim()
+if ($LASTEXITCODE -ne 0) {
+  throw 'Unable to read git status.'
+}
 
-Write-Host 'Done. Repository and Pages workflow setup complete.'
-Write-Host 'Next: add a Pages workflow if needed for static deploy.'
+if ($status) {
+  throw 'Working tree is not clean. Commit or stash changes before publishing.'
+}
+
+Write-Host 'Pushing main branch...'
+Invoke-Git -Arguments @('push', $Remote, 'main')
+
+Write-Host 'Publishing frontend to GitHub Pages branch...'
+Invoke-Git -Arguments @('subtree', 'push', '--prefix', 'frontend', $Remote, $PagesBranch)
+
+$pagesUrl = $null
+if ($remoteUrl -match 'github\.com[:/](?<owner>[^/]+)/(?<repo>[^/.]+)(?:\.git)?$') {
+  $owner = $Matches['owner']
+  $repo = $Matches['repo']
+  $pagesUrl = "https://$owner.github.io/$repo/"
+}
+
+Write-Host 'Publish complete.'
+if ($pagesUrl) {
+  Write-Host ('Live URL: ' + $pagesUrl)
+}
