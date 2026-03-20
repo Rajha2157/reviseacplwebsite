@@ -25,10 +25,12 @@ if ($LASTEXITCODE -ne 0 -or -not $remoteUrl) {
   throw "Remote '$Remote' is not configured."
 }
 
-$status = (& git status --short).Trim()
+$statusOutput = & git status --short
 if ($LASTEXITCODE -ne 0) {
   throw 'Unable to read git status.'
 }
+
+$status = if ($null -eq $statusOutput) { '' } else { ($statusOutput | Out-String).Trim() }
 
 if ($status) {
   throw 'Working tree is not clean. Commit or stash changes before publishing.'
